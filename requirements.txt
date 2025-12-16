@@ -1,11 +1,8 @@
 streamlit
-fastapi
-uvicorn
-ollama
-chromadb
-sentence-transformers
-langchain-community
-langchain-text-splitters
+faiss-cpu
 numpy
-requests
-pydantic
+sentence-transformers
+langchain
+langchain-community
+pypdf
+groq
