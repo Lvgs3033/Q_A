@@ -10,7 +10,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
 
-# SESSION STATE INITIALIZATION
 def init_session_state():
     defaults = {
         "index": None,
@@ -19,21 +18,19 @@ def init_session_state():
         "embedder": None,
         "processing": False
     }
-    for key, value in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = value
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
 
 init_session_state()
 
 
-# PDF LOADING
 def load_pdf(file_path: str):
     loader = PyPDFLoader(file_path)
     return loader.load()
 
 
-# TEXT SPLITTING
 def split_documents(pages):
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,
@@ -49,8 +46,6 @@ def split_documents(pages):
     return chunks
 
 
-
-# VECTOR STORE CREATION (FAISS)
 def create_vector_store(docs):
     embedder = SentenceTransformer(
         "all-MiniLM-L6-v2",
@@ -60,10 +55,7 @@ def create_vector_store(docs):
     texts = [doc.page_content for doc in docs]
     metadatas = [doc.metadata for doc in docs]
 
-    embeddings = embedder.encode(
-        texts,
-        convert_to_numpy=True
-    )
+    embeddings = embedder.encode(texts, convert_to_numpy=True)
 
     index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(embeddings.astype("float32"))
@@ -71,26 +63,21 @@ def create_vector_store(docs):
     return index, texts, metadatas, embedder
 
 
-
-# VECTOR SEARCH
 def retrieve_candidates(question: str, k: int = 8) -> List[str]:
     query_vec = st.session_state.embedder.encode([question])
 
     _, indices = st.session_state.index.search(
-        query_vec.astype("float32"),
-        k
+        query_vec.astype("float32"), k
     )
 
-    candidates = []
+    results = []
     for idx in indices[0]:
-        meta = st.session_state.metadatas[idx]
-        if meta.get("department") == "HR":
-            candidates.append(st.session_state.documents[idx])
+        if st.session_state.metadatas[idx].get("department") == "HR":
+            results.append(st.session_state.documents[idx])
 
-    return candidates
+    return results
 
 
-# SIMPLE RERANKER
 def rerank(question: str, chunks: List[str], top_k: int = 3):
     if not chunks:
         return []
@@ -101,54 +88,53 @@ def rerank(question: str, chunks: List[str], top_k: int = 3):
     scores = np.dot(c_embs, q_emb.T).squeeze()
     ranked = sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True)
 
-    return [chunk for chunk, _ in ranked[:top_k]]
+    return [c for c, _ in ranked[:top_k]]
 
 
-
-# LLM ANSWER GENERATION (GROQ – FREE)
 def generate_answer(question: str, context_chunks: List[str]) -> str:
     if not context_chunks:
         return "Answer not found in the document."
 
-    context = "\n\n".join(context_chunks)
+    context = "\n\n".join(context_chunks)[:4000]
 
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+    try:
+        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-    response = client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a company policy assistant. "
-                    "Use ONLY the provided context. "
-                    "If the answer is missing, say so clearly."
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Context:\n{context}\n\nQuestion:\n{question}"
-            }
-        ],
-        temperature=0.2,
-        max_tokens=250
-    )
+        response = client.chat.completions.create(
+            model="mixtral-8x7b-32768",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a company policy assistant. "
+                        "Use ONLY the provided context. "
+                        "If the answer is missing, say so clearly."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Context:\n{context}\n\nQuestion:\n{question}"
+                }
+            ],
+            temperature=0.2,
+            max_tokens=250
+        )
 
-    return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip()
+
+    except Exception:
+        return "⚠️ Unable to generate answer at the moment. Please try again."
 
 
-# TYPING EFFECT
-def typing_effect(text: str, delay: float = 0.02):
+def typing_effect(text: str, delay: float = 0.015):
     placeholder = st.empty()
-    output = ""
-
-    for char in text:
-        output += char
-        placeholder.markdown(f"**Answer:** {output}")
+    out = ""
+    for ch in text:
+        out += ch
+        placeholder.markdown(f"**Answer:** {out}")
         time.sleep(delay)
 
 
-# STREAMLIT UI
 st.set_page_config(
     page_title="Company Policy Q&A Bot",
     page_icon="📄",
@@ -159,12 +145,9 @@ st.title("📄 Company Policy Q&A Bot")
 st.sidebar.header("Upload Policy PDF")
 
 uploaded_file = st.sidebar.file_uploader(
-    "Upload a PDF",
-    type=["pdf"]
+    "Upload a PDF", type=["pdf"]
 )
 
-
-# PDF PROCESSING
 if uploaded_file:
     with st.spinner("Processing PDF..."):
         file_path = "uploaded.pdf"
@@ -184,8 +167,6 @@ if uploaded_file:
         st.success("✅ PDF indexed successfully!")
 
 
-
-# QUESTION INPUT
 st.subheader("💬 Ask a Question")
 
 query = st.text_input(
