@@ -1,5 +1,4 @@
 import streamlit as st
-import ollama
 import faiss
 import numpy as np
 import time
