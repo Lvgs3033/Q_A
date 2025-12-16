@@ -1,0 +1,11 @@
+streamlit
+fastapi
+uvicorn
+ollama
+chromadb
+sentence-transformers
+langchain-community
+langchain-text-splitters
+numpy
+requests
+pydantic
