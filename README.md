@@ -46,10 +46,6 @@ pip install -r requirements.txt
 3️⃣ Install & Run Ollama
 Download Ollama from: https://ollama.com
 
-Pull the required model: ollama pull deepseek-r1:1.5b
-
-Ensure Ollama is running: ollama serve
-
 ▶️ Run the App
 streamlit run app.py
 Open your browser at: http://localhost:8501
