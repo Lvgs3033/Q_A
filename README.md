@@ -40,8 +40,6 @@ PDF Processing: LangChain + PyPDF
 1️⃣ Clone the Repository
 git clone https://github.com/Lvgs3033/Q_A
 
-cd company-policy-qa-bot
-
 2️⃣ Install Dependencies
 pip install -r requirements.txt
 
