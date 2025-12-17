@@ -1,7 +1,9 @@
 **Company Policy Q&A Bot**
+
 A Streamlit-based Question & Answer application that allows users to upload company policy PDFs and ask questions using semantic search and a local LLM powered by Ollama.
 
 **Features**
+
 Upload and process company policy PDFs
 Intelligent text chunking with metadata
 Semantic search using FAISS vector database
@@ -11,6 +13,7 @@ Clean and interactive Streamlit UI
 Fully offline – no external API keys required
 
 **How It Works**
+
 PDF Upload
 Users upload a policy document in PDF format.
 The PDF is loaded and split into overlapping text chunks.
@@ -25,6 +28,7 @@ Relevant context is passed to a local LLM using Ollama.
 The model generates a concise answer strictly from the provided context.
 
 **Tech Stack**
+
 Frontend: Streamlit
 Vector Store: FAISS
 Embeddings: SentenceTransformers (all-MiniLM-L6-v2)
@@ -32,6 +36,7 @@ LLM: Ollama (deepseek-r1:1.5b)
 PDF Processing: LangChain + PyPDF
 
 **Installation**
+
 1️⃣ Clone the Repository
 git clone https://github.com/your-username/company-policy-qa-bot.git
 cd company-policy-qa-bot
